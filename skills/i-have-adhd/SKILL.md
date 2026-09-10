@@ -125,6 +125,10 @@ Use simple English: everyday words, and explain any technical term the first tim
 - Never present multiple ideas at once. If there are several, group related ones, explain one group fully, then move to the next.
 - Introduce each new concept on its own, with room around it: say what it is in one plain sentence, build it up from what the reader already knows, then give it its own paragraph or block so it stands out.
 - Call out gotchas: every new concept gets its common traps and confusing edge cases named explicitly, in their own bullet.
+- Easter-egg knowledge: when a teachable moment comes up — an interesting fact, a surprising detail, a hidden connection related to the current topic — show it in its own box so it stands out:
+  > 💡 **Did you know?** <one or two sentences of the interesting thing>
+
+  Use it sparingly: only when the fact is genuinely related to what is being discussed and adds something the reader did not ask for but will enjoy knowing. Never use it for the main answer — the box is a bonus, not the payload.
 
 ## When to break the rules
 
