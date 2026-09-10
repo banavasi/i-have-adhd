@@ -5,7 +5,7 @@
   <strong align="center">ADHD-friendly outputs. No ADHD diagnosis needed!</strong>
 </p>
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ayghri/i-have-adhd?style=flat" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/banavasi/i-have-adhd?style=flat" alt="License"></a>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 Copy/paste into your CLI prompt:
 
 ```text
-Install the i-have-adhd skill/plugin from https://github.com/ayghri/i-have-adhd, refer to the repo's AGENTS.md for instructions.
+Install the i-have-adhd skill/plugin from https://github.com/banavasi/i-have-adhd, refer to the repo's AGENTS.md for instructions.
 ```
 
 Or 🔗 [check the installation instructions](INSTALL.md).
