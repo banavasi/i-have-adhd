@@ -2,7 +2,9 @@
 
 Run for review-this, PR review, diff review. The main thread never reviews its own
 work from memory: every review fans out to critic agents in **fresh contexts**,
-then aggregates their reports verbatim. Critics spawn automatically; the user never
+then aggregates their reports verbatim. Cost, budget, diff size, and time are
+never reasons to review on the main thread instead: if critics cannot run, say
+so and stop. Critics spawn automatically; the user never
 asks for them.
 
 ## 1. Pin the fixed point
@@ -44,8 +46,15 @@ All critics start with fresh context and receive only their brief:
   Quote the spec line per finding. Under 400 words.
 - **Blind critic:** the diff only — no branch name, no author, no chat context.
   Brief: what looks wrong, risky, or confusing to a stranger. Under 300 words.
-- **Second-model critic:** when another model CLI is available on this machine, one
-  critic runs on it with the standards brief. Same-model fresh contexts otherwise.
+- **Second-model critic:** when `codex --version` succeeds, spawn
+  `ferret-codex-critic` with the fixed point (`--base <ref>`, `--commit <sha>`,
+  or `--uncommitted`). It saves the report under `.ferret/reviews/` and relays
+  it verbatim. Another model CLI works the same way with the standards brief.
+  No second CLI → same-model fresh contexts, and the report says so.
+
+The standards, spec, and blind critics run as `ferret-critic`, one per axis.
+The second-model critic sends the diff to its provider: skip it when
+`.ferret/rules.md` forbids external review, and say it was skipped.
 
 ## 4. Aggregate
 

@@ -1,0 +1,553 @@
+[
+  {
+    "id": "init",
+    "title": "Set up this project creates the .ferret channel",
+    "setup": {
+      "init": false
+    },
+    "prompt": "set up this project. Accept every default; do not ask me anything.",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: init\\b"
+      },
+      {
+        "type": "file_exists",
+        "path": ".ferret/config.json"
+      },
+      {
+        "type": "file_exists",
+        "path": ".ferret/inbox.md"
+      },
+      {
+        "type": "file_exists",
+        "path": ".ferret/handoff.md"
+      },
+      {
+        "type": "file_exists",
+        "path": ".ferret/rules.md"
+      },
+      {
+        "type": "file_contains",
+        "path": ".gitignore",
+        "text": ".ferret"
+      }
+    ]
+  },
+  {
+    "id": "session-brief",
+    "title": "Session start restores handoff and open tickets",
+    "setup": {
+      "files": {
+        ".ferret/handoff.md": "# Handoff\nGoal: add CSV export to the billing report\nState: export function written, not wired into app.py\nNext: add the `export` subcommand in app.py line 9\n",
+        ".ferret/tickets/001-csv-export.md": "# T-001 CSV export for billing report\nStage: working\nRequest: add csv export to the report\nMandate: in legacy/billing/report.py, app.py · out calc.py\nDone-when: python app.py export ACME prints csv\n## Reports\n",
+        ".ferret/rules.md": "## Communication\nOne question at a time.\n## Ticket scope\nNever change calc.py rounding without asking.\n## Delivery\nEvery change has a test.\n"
+      }
+    },
+    "prompt": "where are we? what is next?",
+    "checks": [
+      {
+        "type": "hook_output_contains",
+        "event": "SessionStart",
+        "text": "FERRET PROJECT BRIEF"
+      },
+      {
+        "type": "hook_output_contains",
+        "event": "SessionStart",
+        "text": "T-001 CSV export"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)T-001|csv export"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)export.{0,40}subcommand|app\\.py"
+      },
+      {
+        "type": "tool_not_used",
+        "name": "Edit"
+      }
+    ]
+  },
+  {
+    "id": "unjumble",
+    "title": "A messy dump is restated as a clean prompt, then work starts",
+    "setup": {},
+    "prompt": "ok so teh report thing i need it to also show taht customer type somewhere near the top and also maybe later we should look at why totals are weird for wholesale but not now and also can you check https://example.com/spec and https://example.com/notes i think someone said finance wants it and dont touch calc please it is scary and also the tests are thin we should fix taht someday",
+    "checks": [
+      {
+        "type": "hook_output_contains",
+        "event": "UserPromptSubmit",
+        "text": "FERRET UNJUMBLE"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Goal:"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Parked:"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/parked.md",
+        "regex": "(?i)wholesale|totals|tests"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/calc.py"
+      }
+    ]
+  },
+  {
+    "id": "explain",
+    "title": "Explain mode maps a small repo and answers from the map",
+    "setup": {},
+    "prompt": "explain this project to me. I have never seen it.",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: explain\\b"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/map.md",
+        "regex": "Commit:\\s*[0-9a-f]{7,40}"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/map.md",
+        "regex": "calc\\.py"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/calc.py"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/map.md",
+        "regex": "(?m)^## (Seams|Danger zones|Unknown)"
+      }
+    ]
+  },
+  {
+    "id": "legacy",
+    "title": "Legacy feature: ticket, guard, characterization test, calc untouched",
+    "setup": {
+      "config": {
+        "legacy": [
+          "legacy/**"
+        ],
+        "reviewGate": "off"
+      }
+    },
+    "prompt": "add a feature to this legacy billing code: the report should show a line 'CUSTOMER TYPE: <type>' right under the header. Mandate: only legacy/billing/report.py and tests. Do not change calc.py. Confirmed, go.",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: legacy\\b"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/tickets/*.md",
+        "regex": "(?m)^Stage:"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/tickets/*.md",
+        "regex": "(?m)^Mandate:"
+      },
+      {
+        "type": "hook_output_contains",
+        "event": "PreToolUse",
+        "text": "FERRET LEGACY GUARD"
+      },
+      {
+        "type": "file_contains",
+        "path": "legacy/billing/report.py",
+        "text": "CUSTOMER TYPE"
+      },
+      {
+        "type": "file_contains",
+        "path": "tests/*.py",
+        "regex": "build_report|CUSTOMER TYPE"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/calc.py"
+      },
+      {
+        "type": "command_passes",
+        "command": [
+          "python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "worker",
+    "title": "A ticket dispatched to ferret-worker comes back with a Status report",
+    "setup": {
+      "config": {
+        "reviewGate": "off"
+      },
+      "files": {
+        ".ferret/tickets/001-usage-text.md": "# T-001 Usage text names the report command\nStage: open\nRequest: the usage message should also list an example: python app.py report ACME\nMandate: in app.py, tests/test_app.py · out legacy/\nDone-when: python app.py prints a usage line containing 'report ACME'\n## Reports\n"
+      }
+    },
+    "prompt": "dispatch ticket T-001 to a ferret-worker now. No worktree needed, work in this checkout.",
+    "checks": [
+      {
+        "type": "agent_spawned",
+        "agent": "ferret-worker",
+        "min": 1
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/tickets/001-usage-text.md",
+        "regex": "(?m)^\\s*Status:\\s*(ready|blocked|failed|dropped)"
+      },
+      {
+        "type": "file_contains",
+        "path": "app.py",
+        "text": "report ACME"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/calc.py"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)ready|blocked|failed|dropped"
+      }
+    ]
+  },
+  {
+    "id": "review",
+    "title": "Review fans out fresh-context critics and finds the planted bugs",
+    "setup": {
+      "review_branch": true
+    },
+    "prompt": "review this branch against main",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: review\\b"
+      },
+      {
+        "type": "agent_spawned",
+        "agent": "ferret-critic",
+        "min": 2
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)sql|injection"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)zero|empty|no orders"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)round|truncat"
+      },
+      {
+        "type": "tool_not_used",
+        "name": "Edit"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/session/*.log",
+        "text": "review-start"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/session/*.log",
+        "text": "review-done"
+      }
+    ]
+  },
+  {
+    "id": "review-codex",
+    "title": "Review also runs the external Codex critic and saves its report",
+    "slow": true,
+    "setup": {
+      "review_branch": true
+    },
+    "extra_tools": [
+      "Bash(codex:*)",
+      "PowerShell(codex:*)"
+    ],
+    "prompt": "review this branch against main. Include the external Codex review.",
+    "checks": [
+      {
+        "type": "agent_spawned",
+        "agent": "ferret-codex-critic",
+        "min": 1
+      },
+      {
+        "type": "file_exists",
+        "path": ".ferret/reviews/*codex*.md"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)codex"
+      }
+    ]
+  },
+  {
+    "id": "review-gate",
+    "title": "Block-mode review gate holds the turn until critics run",
+    "setup": {
+      "config": {
+        "reviewGate": "block"
+      }
+    },
+    "prompt": "in app.py change the usage text to 'usage: python app.py report <customer-name>'. Just that one edit.",
+    "checks": [
+      {
+        "type": "file_contains",
+        "path": "app.py",
+        "text": "<customer-name>"
+      },
+      {
+        "type": "hook_output_contains",
+        "event": "Stop",
+        "text": "ferret review gate"
+      },
+      {
+        "type": "agent_spawned",
+        "agent": "ferret-critic",
+        "min": 1
+      }
+    ]
+  },
+  {
+    "id": "protected",
+    "title": "A protected path is not edited without approval",
+    "setup": {
+      "config": {
+        "protected": [
+          "legacy/billing/calc.py"
+        ],
+        "reviewGate": "off"
+      }
+    },
+    "prompt": "in legacy/billing/calc.py rename the variable t to total inside calc_total.",
+    "checks": [
+      {
+        "type": "hook_output_contains",
+        "event": "PreToolUse",
+        "text": "protected"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/calc.py"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)protected|approv|permission|declin|denied"
+      }
+    ]
+  },
+  {
+    "id": "compact",
+    "title": "At the context limit: strip, handoff, journal, then ask for /compact",
+    "setup": {
+      "config": {
+        "compactAt": 1,
+        "reviewGate": "off"
+      }
+    },
+    "prompt": "what does calc_total do with wholesale customers? Two lines.",
+    "checks": [
+      {
+        "type": "hook_output_contains",
+        "event": "Stop",
+        "text": "ferret compact rule"
+      },
+      {
+        "type": "file_exists",
+        "path": ".ferret/raw/*.md"
+      },
+      {
+        "type": "file_not_contains",
+        "path": ".ferret/raw/*.md",
+        "regex": "tool_result|toolu_|system-reminder"
+      },
+      {
+        "type": "file_contains",
+        "path": ".ferret/handoff.md",
+        "regex": "(?i)next"
+      },
+      {
+        "type": "journal_written"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "/compact"
+      }
+    ],
+    "persist": true
+  },
+  {
+    "id": "first-run",
+    "title": "First session asks which other skills to keep and disables nothing",
+    "setup": {
+      "fake_plugins": true
+    },
+    "prompt": "hi, what can you do here?",
+    "checks": [
+      {
+        "type": "hook_output_contains",
+        "event": "SessionStart",
+        "text": "FERRET FIRST RUN"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)keep"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "other-tool@market"
+      },
+      {
+        "type": "config_file_exists",
+        "path": ".ferret-onboarded"
+      },
+      {
+        "type": "config_file_exists",
+        "path": "skills/deep-review/SKILL.md"
+      },
+      {
+        "type": "tool_not_used",
+        "name": "Bash"
+      }
+    ]
+  },
+  {
+    "id": "browse",
+    "title": "Web research opens real pages and cites them",
+    "setup": {
+      "config": {
+        "reviewGate": "off"
+      }
+    },
+    "extra_tools": [
+      "WebSearch",
+      "WebFetch"
+    ],
+    "prompt": "research on the web: what is the newest stable Python 3 release, and when was it released? Cite the official source.",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: browse\\b"
+      },
+      {
+        "type": "any_tool_used",
+        "names": [
+          "WebSearch",
+          "WebFetch"
+        ]
+      },
+      {
+        "type": "reply_matches",
+        "regex": "https?://[^\\s)]*python\\.org"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "3\\.\\d{1,2}(\\.\\d+)?"
+      },
+      {
+        "type": "tool_not_used",
+        "name": "Edit"
+      }
+    ]
+  },
+  {
+    "id": "design",
+    "title": "Design review rates the command line surface with evidence",
+    "setup": {
+      "config": {
+        "reviewGate": "off"
+      }
+    },
+    "prompt": "design review of this tool's command line: the usage text, the error messages, and the report layout. Review only, change nothing.",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: design\\b"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)what a 10 looks like|[0-9] */ *10"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "(?i)unknown customer|usage"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "app.py"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/report.py"
+      }
+    ]
+  },
+  {
+    "id": "frame",
+    "title": "A new-feature idea is framed and questioned before any code",
+    "setup": {
+      "config": {
+        "reviewGate": "off"
+      }
+    },
+    "prompt": "I am thinking of adding a whole customer loyalty points system to this shop. Is this worth building?",
+    "checks": [
+      {
+        "type": "reply_matches",
+        "regex": "(?m)^Mode: frame\\b"
+      },
+      {
+        "type": "reply_matches",
+        "regex": "\\?"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "legacy/billing/calc.py"
+      },
+      {
+        "type": "file_unchanged",
+        "path": "app.py"
+      }
+    ]
+  },
+  {
+    "id": "not-my-task",
+    "title": "Casual chat exits the router silently",
+    "setup": {},
+    "prompt": "lol just ship it, friday vibes. how is your day going?",
+    "checks": [
+      {
+        "type": "reply_not_matches",
+        "regex": "(?m)^Mode:"
+      },
+      {
+        "type": "tool_not_used",
+        "name": "Edit"
+      },
+      {
+        "type": "tool_not_used",
+        "name": "Agent"
+      }
+    ]
+  }
+]

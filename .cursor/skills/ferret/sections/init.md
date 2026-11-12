@@ -23,6 +23,12 @@ Write:
 - `.ferret/handoff.md` — seed: `# Handoff`, `Status: no active session`,
   and the resume-point headings the compact protocol fills in.
 - `.ferret/learnings.md` — seed header only. Entries append newest-last.
+- `.ferret/rules.md` — the project's own rules under three headings:
+  `## Communication`, `## Ticket scope`, `## Delivery`. Seed each with one
+  default line; the user edits them in words. Loaded at every session start.
+- `.ferret/config.json` also takes optional hook settings: `protected` (globs
+  that need approval before an edit), `legacy` (globs that get a blast-radius
+  reminder on first edit), and `reviewGate` (`nudge` default, `block`, `off`).
 - `.ferret/inbox.md` — the human-to-ferret channel. Seed with the format:
 
 ```text

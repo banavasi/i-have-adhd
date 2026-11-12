@@ -111,3 +111,30 @@ python3 scripts/run_evals.py score evals/results/scores.jsonl
 ```
 
 Record the exact CLI and model versions with published results, including measured token and cost numbers. Do not compare conditions produced with different cases, models, trial counts, or rubrics.
+
+## Live scenarios
+
+`scripts/run_live_scenarios.py` runs ferret end to end in real, headless Claude
+Code sessions. Each scenario copies the fixture project in
+`evals/fixtures/legacy-shop/` to a temp folder, loads this checkout as a plugin,
+sends one prompt, and checks the event stream and the files left behind
+(hooks fired, agents spawned, files written, files left alone).
+
+```bash
+python3 scripts/run_live_scenarios.py --list
+python3 scripts/run_live_scenarios.py --only unjumble,legacy
+python3 scripts/run_live_scenarios.py --include-slow --jobs 4
+```
+
+Scenarios and their checks live in `evals/live/scenarios.json`. Results, the raw
+stream, and the reply for each scenario go to `evals/results/live/<stamp>/`.
+
+This spends real tokens: about $0.10–$0.50 per scenario on `claude-opus-5-5`.
+Keep `--budget-usd` generous. The model can see a tight cap and will skip
+subagents to stay under it, which fails the scenarios that expect them.
+
+Runs are isolated from the operator's setup: user settings are not loaded,
+`FERRET_CONFIG_DIR` points ferret's flag and marker files at a temp folder, and
+`DEV_JOURNAL` points the journal at a temp folder. The `compact` scenario needs
+a session transcript, so it alone leaves one session in the Claude Code history.
+The `review-codex` scenario is marked slow and sends the fixture diff to Codex.

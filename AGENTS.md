@@ -30,6 +30,9 @@ Agents may read and reference any GitHub issue or pull request. Commenting has n
 | Skill mirror | `.cursor/skills/ferret/SKILL.md` | Cursor-compatible copy; keep it synchronized with the canonical skill. |
 | Claude and Codex metadata | `.claude-plugin/`, `.codex-plugin/`, `.agents/plugins/` | Plugin manifests and marketplace metadata. |
 | Shared hooks | `hooks/hooks.json`, `hooks/always-on.*` | Hook declarations and cross-platform always-on behavior. |
+| Project hooks | `hooks/session-brief.mjs`, `hooks/unjumble.mjs`, `hooks/legacy-guard.mjs`, `hooks/ledger.mjs`, `hooks/context-watch.mjs`, `hooks/first-run.mjs`, `hooks/strip.mjs`, `hooks/lib.mjs` | Hooks that act only in a project with `.ferret/`. |
+| Agents | `agents/` | Named workers the router dispatches: worker, cartographer, critic, Codex critic. |
+| Design notes | `docs/design/` | Why the harness is shaped the way it is. |
 | Pi and OMP | `package.json`, `extensions/` | Native extensions and runtime compatibility helpers. |
 | OpenCode | `.opencode/` | Auto-discovered plugin and command entry points for V1 (1.18.29+) and V2. |
 | Other runtimes | `qwen-extension.json`, `kimi.plugin.json`, `gemini-extension.json`, `GEMINI.md`, `plugin.json` | Qwen, Kimi, Gemini, and additional plugin metadata. |

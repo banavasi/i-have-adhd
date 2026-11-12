@@ -38,11 +38,14 @@ the steps, restates the state, and ends with one concrete next step. Say
 ```mermaid
 flowchart LR
     P[Prompt] --> R{Router}
+    R --> U[unjumble: messy dump to clean prompt]
     R --> M[morning: standup, triage, plan]
     R --> F[frame: reframe, interview, design note]
     R --> PL[plan: spec, tickets, decisions]
     R --> B[build: test-first loops, spikes]
+    R --> L[legacy: ticket, blast radius, pin, sprout]
     R --> D[debug: hypothesis, fix, regress]
+    R --> E[explain: map the repo, answer from the map]
     R --> BR[browse: cited research]
     R --> RV[review: fresh-context critics]
     R --> DE[design: rated, evidenced]
@@ -71,7 +74,45 @@ Or read [INSTALL.md](INSTALL.md) for per-runtime steps.
 
 - `skills/ferret/SKILL.md` — the router. Read it first.
 - `skills/ferret/sections/` — one file per day phase. Ferret loads one per task.
-- `hooks/` — opt-in always-on injection plus the per-turn router hint.
+- `agents/` — named workers: `ferret-worker`, `ferret-cartographer`,
+  `ferret-critic`, `ferret-codex-critic`.
+- `hooks/` — opt-in always-on injection, the per-turn router hint, and the
+  project hooks below.
+- `docs/design/superagent-roles.md` — where the roles, tickets, and hooks
+  come from.
+
+## Project hooks
+
+These run only in a project that has `.ferret/`:
+
+- **Session brief.** Each session starts with the project rules, the last
+  handoff, open tickets, and the map stamp.
+- **Unjumble.** A messy, run-on, or typo-heavy prompt is restated as a clean
+  prompt before work starts.
+- **Legacy guard.** Globs under `protected` in `.ferret/config.json` ask before
+  an edit. Globs under `legacy` get one blast-radius reminder per file.
+- **Review ledger.** Changed files with no review produce one reminder when the
+  turn ends. Set `"reviewGate": "block"` to hold the turn until critics run, or
+  `"off"` to silence it.
+- **Worker contract.** A `ferret-worker` that ends without its `Status:` report
+  is sent back once.
+- **40% compact rule.** At 40% context used, the turn is held once: ferret
+  writes the handoff and the journal entry, then asks you to type `/compact`
+  (or `/clear`). The next session start restores the handoff. Tune it with
+  `compactAt` and `contextWindow` in `.ferret/config.json`. No hook can run
+  `/compact` for you. This one also runs under the always-on flag.
+- **Stripped record.** Before that, and before every compaction, a program
+  (`hooks/strip.mjs`) writes the session to `.ferret/raw/<session>.md` with tool
+  calls, reasoning, and injected text removed. It is plain code and regular
+  expressions: no model, no tokens. By hand:
+  `node hooks/strip.mjs <transcript.jsonl> <out.md>`.
+
+One more hook runs once per machine, in the first session after install: it
+lists your other plugins and personal skills and asks which to keep. What you
+drop is disabled, never uninstalled. Delete `~/.claude/.ferret-onboarded` to be
+asked again.
+
+The Codex critic needs the `codex` CLI. It sends the diff to the Codex provider.
 
 Say `set up this project` once per repo. Ferret creates the gitignored
 `.ferret/` channel: inbox, handoff, learnings, and config.

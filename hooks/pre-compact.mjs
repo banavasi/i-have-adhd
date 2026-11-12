@@ -13,7 +13,7 @@ import path from "node:path";
 
 try {
   const configDir =
-    process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude");
+    process.env.FERRET_CONFIG_DIR || process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude");
   if (!fs.existsSync(path.join(configDir, ".ferret-always"))) process.exit(0);
 
   const run = (cmd, args) => {
@@ -58,9 +58,41 @@ try {
   ];
   fs.writeFileSync(file, snapshot.join("\n"));
 
+  // Also keep the conversation itself, stripped of tool calls by program
+  // (strip.mjs: plain code and regular expressions, no model tokens).
+  let record = "";
+  try {
+    // The payload may never come (a terminal, or a pipe nobody closes), so
+    // wait at most one second for it instead of blocking compaction.
+    const payload = process.stdin.isTTY
+      ? ""
+      : await new Promise((resolve) => {
+          let text = "";
+          const done = () => resolve(text);
+          const timer = setTimeout(done, 1000);
+          process.stdin.setEncoding("utf8");
+          process.stdin.on("data", (chunk) => (text += chunk));
+          process.stdin.on("end", () => (clearTimeout(timer), done()));
+          process.stdin.on("error", () => (clearTimeout(timer), done()));
+        });
+    process.stdin.pause();
+    process.stdin.unref?.();
+    const input = JSON.parse(payload || "{}");
+    if (input.transcript_path) {
+      const { stripFile } = await import("./strip.mjs");
+      const id = String(input.session_id || stamp).replace(/[^A-Za-z0-9_-]/g, "_");
+      const rawFile = path.join(dir, "raw", `${id}.md`);
+      if (stripFile(input.transcript_path, rawFile)) record = ` Stripped session record: ${rawFile}.`;
+    }
+  } catch {
+    // No payload or no transcript: the git snapshot alone is still written.
+  }
+
   process.stdout.write(
-    `FERRET PRE-COMPACT: state saved to ${file}. ` +
+    `FERRET PRE-COMPACT: state saved to ${file}.${record} ` +
       "The handoff in .ferret/handoff.md is the resume point after compaction.\n",
+    // Exit once the line is flushed: an open stdin must not keep the hook alive.
+    () => process.exit(0),
   );
 } catch {
   // Never block compaction.

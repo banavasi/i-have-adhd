@@ -1,6 +1,7 @@
 # Meta — improve the harness, extend the reach
 
-Run when a flow repeats, when the task needs a domain the harness lacks, or when
+Run when a flow repeats, when the task needs a domain the harness lacks, when
+the first-run hook asks to declutter skills, or when
 asked to improve the harness itself. The harness compounds or it rots.
 
 ## 1. Skillify (promote repeated flows)
@@ -31,7 +32,24 @@ specialty), look outward before improvising:
 If nothing vetted exists, say so and work from primary sources
 (`sections/browse.md` §2) instead of pretending a skill covered it.
 
-## 3. Evolve (change the harness safely)
+## 3. Declutter (once, at install)
+
+The first session after install, a hook lists the other enabled plugins and
+personal skills. Overlapping skills fight the router, so ask once:
+
+1. Show the list, grouped: plugins, personal skills. Mark each one that
+   overlaps a ferret mode with the mode name.
+2. Ask one multi-select question: which to KEEP. Default: keep all. Never
+   pre-select a removal.
+3. For each one the user drops, disable it reversibly: a plugin with
+   `claude plugin disable <id>`; a personal skill by moving its folder to
+   `skills.disabled/` beside `skills/`. Never uninstall, never delete.
+   Skills managed by an organization are left alone.
+4. Report what was disabled and the one command that undoes each.
+
+The question is asked once. "declutter skills" runs it again on request.
+
+## 4. Evolve (change the harness safely)
 
 Harness edits follow the same discipline as product edits: router changes get the
 day-rehearsal (one prompt per phase, correct mode each time); new sections get a

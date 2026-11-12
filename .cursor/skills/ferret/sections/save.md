@@ -31,18 +31,25 @@ learned.md                 append-only
 
 ## 2. Raw
 
-An unedited dump of the session's substance: what was tried, what failed, exact
-commands, exact errors, open threads. Same strip pass as §3, but nothing is
-summarized away — raw preserves, journal distills. One raw file per session max.
+The raw record is written by a program, never by the model. `hooks/strip.mjs`
+reads the session transcript and writes `.ferret/raw/<session>.md` with plain
+code and regular expressions: no tokens spent. It runs by itself at the compact
+limit and before every compaction. By hand:
+`node <ferret>/hooks/strip.mjs <transcript.jsonl> <out.md>`.
+
+Never re-clean, summarize, or retype the raw file. Raw preserves; the journal
+distills from it. One raw file per session.
 
 ## 3. Strip pass (journal AND raw)
 
-Before writing, remove every trace of harness machinery:
+For raw, the program applies this pass. For the journal, you apply it:
 
-- REMOVE: tool transcripts, call blocks, reasoning dumps, agent narration
-  ("I'll now...", "Let me check..."), duplicate restatements of one fact.
-- KEEP, as plain text: commands run, file paths with line numbers, decisions with
-  reasons, errors with causes, open items, next steps.
+- REMOVE: tool calls and their results, reasoning dumps, subagent threads,
+  injected reminders and hook text, agent narration ("I'll now...", "Let me
+  check..."), duplicate restatements of one fact.
+- KEEP, as plain text: what the user asked, what was answered, commands run,
+  file paths with line numbers, decisions with reasons, errors with causes,
+  open items, next steps.
 - Verify by reading the output once: if a stranger cannot tell which harness wrote
   it, the strip passed. A journal that leaks tool calls is a broken journal.
 
@@ -70,9 +77,9 @@ entries go to the user as remove / keep / update. Never silently drop.
   unsure), have the user explain the mechanism back in their own words before the
   session's learning counts as learned.
 
-## 6. Compact protocol (45% rule)
+## 6. Compact protocol (40% rule)
 
-Trigger at 45% context used or more, or when usage is unknown and the session
+Trigger at 40% context used or more, or when usage is unknown and the session
 runs long. No exceptions. Every harness (Claude, Codex, Grok, others). Every OS.
 
 1. Stop new work. Mid-step is fine; note the exact resume point first.
@@ -82,4 +89,8 @@ runs long. No exceptions. Every harness (Claude, Codex, Grok, others). Every OS.
 4. Compact now: `/compact` on Claude; the harness compact action elsewhere.
 5. After compaction, read `.ferret/handoff.md` first, restate state, then continue.
 
+The Stop hook measures context from the transcript and holds the turn once at
+the limit (`compactAt` in `.ferret/config.json`, default 40; `contextWindow`
+sets the model's size in tokens, default 200000). No hook can run `/compact`
+or `/clear`: after steps 1–3, tell the user in one line to type it, then stop.
 The PreCompact hook auto-saves git state alongside. It never replaces the handoff.
